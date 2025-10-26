@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,14 +24,48 @@ interface Module {
   icon: string;
 }
 
+const PROGRESS_API = 'https://functions.poehali.dev/cfb0e480-e45a-4d22-80a9-20cd16bc77d8';
+
 const Index = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [telegramUser, setTelegramUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadProgress = useCallback(async (userId: number) => {
+    try {
+      const response = await fetch(`${PROGRESS_API}?telegram_id=${userId}`);
+      const data = await response.json();
+      
+      if (data.progress && data.progress.length > 0) {
+        setModules((prevModules) =>
+          prevModules.map((module) => ({
+            ...module,
+            lessons: module.lessons.map((lesson) => {
+              const progressItem = data.progress.find((p: any) => p.lesson_id === lesson.id);
+              return progressItem
+                ? { ...lesson, isCompleted: progressItem.is_completed }
+                : lesson;
+            }),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     initTelegramApp();
     const user = getTelegramUser();
     setTelegramUser(user);
+    
+    if (user?.id) {
+      loadProgress(user.id);
+    } else {
+      setIsLoading(false);
+    }
 
     if (selectedLesson && tg) {
       tg.BackButton.show();
@@ -352,20 +386,59 @@ const Index = () => {
 
   const subscriptionEndDate = '15 декабря 2025';
 
-  const toggleLessonCompletion = (moduleId: string, lessonId: string) => {
+  const toggleLessonCompletion = async (moduleId: string, lessonId: string) => {
+    const module = modules.find((m) => m.id === moduleId);
+    const lesson = module?.lessons.find((l) => l.id === lessonId);
+    
+    if (!lesson || !telegramUser?.id) return;
+    
+    const newCompletedState = !lesson.isCompleted;
+    
     setModules((prevModules) =>
       prevModules.map((module) =>
         module.id === moduleId
           ? {
               ...module,
               lessons: module.lessons.map((lesson) =>
-                lesson.id === lessonId ? { ...lesson, isCompleted: !lesson.isCompleted } : lesson
+                lesson.id === lessonId ? { ...lesson, isCompleted: newCompletedState } : lesson
               ),
             }
           : module
       )
     );
+    
+    try {
+      await fetch(PROGRESS_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          telegram_id: telegramUser.id,
+          telegram_user: {
+            first_name: telegramUser.first_name,
+            last_name: telegramUser.last_name,
+            username: telegramUser.username,
+          },
+          lesson_id: lessonId,
+          is_completed: newCompletedState,
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-100 to-green-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mb-4"></div>
+          <p className="text-green-800 text-lg font-medium">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (selectedLesson) {
     return (

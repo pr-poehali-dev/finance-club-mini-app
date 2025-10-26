@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "Get progress for non-existent user",
+      "method": "GET",
+      "path": "/?telegram_id=12345",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "progress": []
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create user and mark lesson complete",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "telegram_id": 12345,
+        "telegram_user": {
+          "first_name": "Test",
+          "last_name": "User"
+        },
+        "lesson_id": "1-1",
+        "is_completed": true
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
