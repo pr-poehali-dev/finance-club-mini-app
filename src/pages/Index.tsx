@@ -310,12 +310,8 @@ const Index = () => {
             </div>
           </div>
           {telegramUser && (
-            <p className="text-lg mb-4 text-black">Привет, {telegramUser.first_name}! 👋</p>
+            <p className="text-lg text-black">Привет, {telegramUser.first_name}! 👋</p>
           )}
-          <h1 className="text-5xl font-bold mb-2 text-black">ОНЛАЙН</h1>
-          <div className="inline-block bg-white px-6 py-2 rounded-full text-lg font-semibold text-black shadow-md">
-            В ЧЕТВЕРГ
-          </div>
         </div>
 
         <Card className="mb-6 border-green-300 shadow-lg bg-white/95 backdrop-blur">
