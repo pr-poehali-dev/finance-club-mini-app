@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
+import { initTelegramApp, getTelegramUser, tg } from '@/utils/telegram';
 
 interface Lesson {
   id: string;
@@ -25,6 +26,24 @@ interface Module {
 
 const Index = () => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [telegramUser, setTelegramUser] = useState<any>(null);
+
+  useEffect(() => {
+    initTelegramApp();
+    const user = getTelegramUser();
+    setTelegramUser(user);
+
+    if (selectedLesson && tg) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(() => setSelectedLesson(null));
+      return () => {
+        tg.BackButton.hide();
+        tg.BackButton.offClick(() => setSelectedLesson(null));
+      };
+    } else if (tg) {
+      tg.BackButton.hide();
+    }
+  }, [selectedLesson]);
   const [modules, setModules] = useState<Module[]>([
     {
       id: '1',
@@ -290,6 +309,9 @@ const Index = () => {
               Клуб ФИНАНСИСТ<span className="font-bold">PRO</span>
             </div>
           </div>
+          {telegramUser && (
+            <p className="text-lg mb-4 text-black">Привет, {telegramUser.first_name}! 👋</p>
+          )}
           <h1 className="text-5xl font-bold mb-2 text-black">ОНЛАЙН</h1>
           <div className="inline-block bg-white px-6 py-2 rounded-full text-lg font-semibold text-black shadow-md">
             В ЧЕТВЕРГ
