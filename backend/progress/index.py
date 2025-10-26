@@ -35,6 +35,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     conn = psycopg2.connect(database_url)
+    conn.autocommit = True
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     if method == 'GET':
@@ -50,8 +51,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         cursor.execute(
-            "SELECT id FROM users WHERE telegram_id = %s",
-            (int(telegram_id),)
+            f"SELECT id FROM users WHERE telegram_id = {int(telegram_id)}"
         )
         user = cursor.fetchone()
         
@@ -65,8 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         cursor.execute(
-            "SELECT lesson_id, is_completed, completed_at FROM lesson_progress WHERE user_id = %s",
-            (user['id'],)
+            f"SELECT lesson_id, is_completed, completed_at FROM lesson_progress WHERE user_id = {user['id']}"
         )
         progress = cursor.fetchall()
         conn.close()
@@ -104,37 +103,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         cursor.execute(
-            "SELECT id FROM users WHERE telegram_id = %s",
-            (int(telegram_id),)
+            f"SELECT id FROM users WHERE telegram_id = {int(telegram_id)}"
         )
         user = cursor.fetchone()
         
         if not user:
+            first_name = telegram_user.get('first_name', '').replace("'", "''")
+            last_name = (telegram_user.get('last_name') or '').replace("'", "''")
+            username = (telegram_user.get('username') or '').replace("'", "''")
+            
             cursor.execute(
-                "INSERT INTO users (telegram_id, first_name, last_name, username) VALUES (%s, %s, %s, %s) RETURNING id",
-                (
-                    int(telegram_id),
-                    telegram_user.get('first_name'),
-                    telegram_user.get('last_name'),
-                    telegram_user.get('username')
-                )
+                f"INSERT INTO users (telegram_id, first_name, last_name, username) VALUES ({int(telegram_id)}, '{first_name}', '{last_name}', '{username}') RETURNING id"
             )
             user = cursor.fetchone()
-            conn.commit()
+        
+        lesson_id_safe = lesson_id.replace("'", "''")
+        completed_time = 'CURRENT_TIMESTAMP' if is_completed else 'NULL'
         
         cursor.execute(
-            """
+            f"""
             INSERT INTO lesson_progress (user_id, lesson_id, is_completed, completed_at, updated_at)
-            VALUES (%s, %s, %s, CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END, CURRENT_TIMESTAMP)
+            VALUES ({user['id']}, '{lesson_id_safe}', {is_completed}, {completed_time}, CURRENT_TIMESTAMP)
             ON CONFLICT (user_id, lesson_id)
             DO UPDATE SET 
-                is_completed = EXCLUDED.is_completed,
-                completed_at = CASE WHEN EXCLUDED.is_completed THEN CURRENT_TIMESTAMP ELSE NULL END,
+                is_completed = {is_completed},
+                completed_at = {completed_time},
                 updated_at = CURRENT_TIMESTAMP
-            """,
-            (user['id'], lesson_id, is_completed, is_completed)
+            """
         )
-        conn.commit()
         conn.close()
         
         return {

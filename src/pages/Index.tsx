@@ -620,19 +620,26 @@ const Index = () => {
                                 onClick={() => setSelectedLesson(lesson)}
                                 className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
                                   lesson.isCompleted
-                                    ? 'bg-green-50 border-green-300'
+                                    ? 'bg-green-100 border-green-500'
                                     : 'bg-white border-gray-200 hover:border-green-300'
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-3 flex-1">
                                     {lesson.isCompleted ? (
-                                      <Icon name="CheckCircle2" size={20} className="text-green-600" />
+                                      <div className="flex items-center gap-2">
+                                        <Icon name="CheckCircle2" size={22} className="text-green-700 fill-green-700" />
+                                        <Badge className="bg-green-700 text-white text-xs px-2 py-0.5">
+                                          Просмотрен
+                                        </Badge>
+                                      </div>
                                     ) : (
-                                      <Icon name="Circle" size={20} className="text-gray-300" />
+                                      <Icon name="Circle" size={22} className="text-gray-300" />
                                     )}
-                                    <div>
-                                      <p className="font-medium text-sm">{lesson.title}</p>
+                                    <div className="flex-1">
+                                      <p className={`font-medium text-sm ${lesson.isCompleted ? 'text-green-900' : ''}`}>
+                                        {lesson.title}
+                                      </p>
                                       <p className="text-xs text-muted-foreground">{lesson.description}</p>
                                     </div>
                                   </div>

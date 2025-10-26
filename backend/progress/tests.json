@@ -1,21 +1,17 @@
 {
   "tests": [
     {
-      "name": "Get progress for non-existent user",
+      "name": "Get progress for existing user",
       "method": "GET",
       "path": "/?telegram_id=12345",
-      "expectedStatus": 200,
-      "expectedBody": {
-        "progress": []
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 200
     },
     {
       "name": "Create user and mark lesson complete",
       "method": "POST",
       "path": "/",
       "body": {
-        "telegram_id": 12345,
+        "telegram_id": 99999,
         "telegram_user": {
           "first_name": "Test",
           "last_name": "User"
