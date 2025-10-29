@@ -89,7 +89,7 @@ const Index = () => {
           id: '1-1',
           title: 'Введение в финансы',
           description: 'Что такое финансовая грамотность и почему она важна',
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+          videoUrl: 'https://vcdn1.soholms.com/ePcSxvPE?title=0&speed=1&id_recovery=187-254-298',
           duration: '12:30',
           isCompleted: true,
         },
